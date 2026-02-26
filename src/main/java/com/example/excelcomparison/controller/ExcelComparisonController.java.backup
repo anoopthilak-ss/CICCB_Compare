@@ -1,0 +1,206 @@
+package com.example.excelcomparison.controller;
+
+import com.example.excelcomparison.model.ComparisonRequest;
+import com.example.excelcomparison.model.ExcelData;
+import com.example.excelcomparison.service.ComparisonService;
+import com.example.excelcomparison.service.ExcelService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+@RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = "*")
+public class ExcelComparisonController {
+
+    @Autowired
+    private ExcelService excelService;
+
+    @Autowired
+    private ComparisonService comparisonService;
+
+    private final Map<String, ExcelData> fileStorage = new ConcurrentHashMap<>();
+
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (file.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Please select a file to upload");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (!file.getOriginalFilename().endsWith(".xlsx") && !file.getOriginalFilename().endsWith(".xls")) {
+                response.put("success", false);
+                response.put("message", "Please upload an Excel file (.xlsx or .xls)");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            ExcelData excelData = excelService.parseExcelFile(file);
+            String fileId = UUID.randomUUID().toString();
+            fileStorage.put(fileId, excelData);
+
+            response.put("success", true);
+            response.put("message", "File uploaded successfully");
+            response.put("fileId", fileId);
+            response.put("fileName", excelData.getFileName());
+            response.put("headers", excelData.getHeaders());
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+            response.put("success", false);
+            response.put("message", "Error processing file: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/compare")
+    public ResponseEntity<Map<String, Object>> compareFiles(@RequestBody ComparisonRequest request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Validate request
+            if (request == null || !request.isValid()) {
+                response.put("success", false);
+                response.put("message", "Invalid comparison request. All fields are required.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            ExcelData file1 = fileStorage.get(request.getFile1Id());
+            ExcelData file2 = fileStorage.get(request.getFile2Id());
+
+            if (file1 == null || file2 == null) {
+                response.put("success", false);
+                response.put("message", "One or both files not found. Please upload files again.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            ComparisonService.ComparisonResult result = comparisonService.compareColumns(
+                file1, file2, request.getColumn1(), request.getColumn2()
+            );
+
+            String resultId = UUID.randomUUID().toString();
+            fileStorage.put(resultId + "_matched", new ExcelData("matched", file1.getHeaders(), result.getMatchedRows()));
+            fileStorage.put(resultId + "_mismatched", new ExcelData("mismatched", file1.getHeaders(), result.getMismatchedRows()));
+
+            response.put("success", true);
+            response.put("message", "Comparison completed successfully");
+            response.put("resultId", resultId);
+            response.put("matchedCount", result.getMatchedRows().size());
+            response.put("mismatchedCount", result.getMismatchedRows().size());
+            
+            // Include the actual result data for immediate display
+            response.put("matchedRows", result.getMatchedRows());
+            response.put("mismatchedRows", result.getMismatchedRows());
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error during comparison: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/download/{resultId}/{type}")
+    public ResponseEntity<byte[]> downloadResult(@PathVariable String resultId, @PathVariable String type) {
+        try {
+            String key = resultId + "_" + type;
+            ExcelData resultData = fileStorage.get(key);
+
+            if (resultData == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] excelBytes = excelService.createComparisonResult(
+                type.equals("matched") ? resultData.getRows() : new ArrayList<>(),
+                type.equals("mismatched") ? resultData.getRows() : new ArrayList<>()
+            );
+
+            String filename = type.equals("matched") ? "matched_rows.xlsx" : "mismatched_rows.xlsx";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", filename);
+            headers.setContentLength(excelBytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelBytes);
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/files/{fileId}")
+    public ResponseEntity<Map<String, Object>> getFileInfo(@PathVariable String fileId) {
+        Map<String, Object> response = new HashMap<>();
+        ExcelData excelData = fileStorage.get(fileId);
+
+        if (excelData == null) {
+            response.put("success", false);
+            response.put("message", "File not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        response.put("success", true);
+        response.put("fileName", excelData.getFileName());
+        response.put("headers", excelData.getHeaders());
+        response.put("rows", excelData.getRows());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/get-results")
+    public ResponseEntity<Map<String, Object>> getComparisonResults(@RequestBody Map<String, String> request) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String resultId = request.get("resultId");
+            String type = request.get("type");
+            
+            if (resultId == null || type == null) {
+                response.put("success", false);
+                response.put("message", "Result ID and type are required");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            String key = resultId + "_" + type;
+            ExcelData resultData = fileStorage.get(key);
+
+            if (resultData == null) {
+                response.put("success", false);
+                response.put("message", "Results not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            response.put("success", true);
+            response.put("rows", resultData.getRows());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error retrieving results: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+}

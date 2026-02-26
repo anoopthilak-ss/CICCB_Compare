@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Comparison Tool</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Excel Comparison Tool</h1>
+            <p>Upload two Excel files and compare selected columns</p>
+        </header>
+
+        <main>
+            <!-- File Upload Section -->
+            <section class="upload-section">
+                <div class="file-upload-container">
+                    <div class="file-upload-box">
+                        <label for="file1" class="file-label">
+                            <span class="upload-icon">📁</span>
+                            <span class="upload-text">Choose First Excel File</span>
+                            <input type="file" id="file1" accept=".xlsx,.xls" />
+                        </label>
+                        <div id="file1-info" class="file-info hidden">
+                            <span class="file-name"></span>
+                            <button class="remove-btn" onclick="removeFile('file1')">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="file-upload-box">
+                        <label for="file2" class="file-label">
+                            <span class="upload-icon">📁</span>
+                            <span class="upload-text">Choose Second Excel File</span>
+                            <input type="file" id="file2" accept=".xlsx,.xls" />
+                        </label>
+                        <div id="file2-info" class="file-info hidden">
+                            <span class="file-name"></span>
+                            <button class="remove-btn" onclick="removeFile('file2')">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sheet Selection Section -->
+            <section id="sheet-selection" class="sheet-section hidden">
+                <h3>Select Excel Sheets</h3>
+                <div class="sheet-selection-container">
+                    <div class="sheet-select-box">
+                        <label for="sheet1">Sheet from File 1:</label>
+                        <select id="sheet1" class="sheet-select">
+                            <option value="">Select a sheet</option>
+                        </select>
+                        <div id="file1-sheet-info" class="sheet-info hidden">
+                            <span class="selected-sheet"></span>
+                        </div>
+                    </div>
+                    <div class="sheet-select-box">
+                        <label for="sheet2">Sheet from File 2:</label>
+                        <select id="sheet2" class="sheet-select">
+                            <option value="">Select a sheet</option>
+                        </select>
+                        <div id="file2-sheet-info" class="sheet-info hidden">
+                            <span class="selected-sheet"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Column Selection Section -->
+            <section id="column-selection" class="column-section hidden">
+                <h3>Select Columns to Compare</h3>
+                <div class="column-selection-container">
+                    <div class="column-select-box">
+                        <label for="column1">Column from File 1:</label>
+                        <select id="column1" class="column-select">
+                            <option value="">Select a column</option>
+                        </select>
+                    </div>
+                    <div class="column-select-box">
+                        <label for="column2">Column from File 2:</label>
+                        <select id="column2" class="column-select">
+                            <option value="">Select a column</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Compare Button -->
+            <section id="compare-section" class="compare-section hidden">
+                <button id="compare-btn" class="compare-btn" onclick="compareFiles()">
+                    Compare Files
+                </button>
+            </section>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Processing comparison...</p>
+            </div>
+
+            <!-- Results Section -->
+            <section id="results" class="results-section hidden">
+                <h3>Comparison Results</h3>
+                <div class="results-summary">
+                    <div class="result-card matched">
+                        <h4>Matched Rows</h4>
+                        <p id="matched-count">0</p>
+                        <button id="download-matched" class="download-btn">Download Matched</button>
+                        <button id="view-matched" class="view-btn">View Details</button>
+                    </div>
+                    <div class="result-card mismatched">
+                        <h4>Mismatched Rows</h4>
+                        <p id="mismatched-count">0</p>
+                        <button id="download-mismatched" class="download-btn">Download Mismatched</button>
+                        <button id="view-mismatched" class="view-btn">View Details</button>
+                    </div>
+                </div>
+
+                <!-- Tabular Results -->
+                <div id="tabular-results" class="tabular-results hidden">
+                    <div class="result-tabs">
+                        <button id="matched-tab" class="tab-btn active" onclick="showTab('matched')">Matched Results</button>
+                        <button id="mismatched-tab" class="tab-btn" onclick="showTab('mismatched')">Mismatched Results</button>
+                    </div>
+                    
+                    <!-- Matched Results Table -->
+                    <div id="matched-table-container" class="table-container">
+                        <div class="table-controls">
+                            <input type="text" id="matched-search" placeholder="Search matched results..." class="search-input">
+                            <button id="export-matched-csv" class="export-btn">Export to CSV</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="matched-table" class="results-table">
+                                <thead id="matched-thead"></thead>
+                                <tbody id="matched-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div id="matched-pagination" class="pagination"></div>
+                    </div>
+
+                    <!-- Mismatched Results Table -->
+                    <div id="mismatched-table-container" class="table-container hidden">
+                        <div class="table-controls">
+                            <input type="text" id="mismatched-search" placeholder="Search mismatched results..." class="search-input">
+                            <button id="export-mismatched-csv" class="export-btn">Export to CSV</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="mismatched-table" class="results-table">
+                                <thead id="mismatched-thead"></thead>
+                                <tbody id="mismatched-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div id="mismatched-pagination" class="pagination"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Messages -->
+            <div id="message" class="message hidden"></div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
