@@ -88,6 +88,9 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <jvmArguments>
+                        -Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200
+                    </jvmArguments>
                 </configuration>
             </plugin>
             <plugin>

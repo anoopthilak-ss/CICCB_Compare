@@ -60,8 +60,9 @@ public class ComparisonService {
     }
     
     private ComparisonResult compareWithCrossSheetValues(ExcelData file1, ExcelData file2, String column1, String column2) {
-        List<Map<String, Object>> matchedRows = new ArrayList<>();
-        List<Map<String, Object>> mismatchedRows = new ArrayList<>();
+        // Use ArrayList with initial capacity to reduce memory reallocation
+        List<Map<String, Object>> matchedRows = new ArrayList<>(1000);
+        List<Map<String, Object>> mismatchedRows = new ArrayList<>(1000);
         
         // Get only values from selected columns
         Set<String> file1Values = getColumnValues(file1, column1);
@@ -75,6 +76,13 @@ public class ComparisonService {
             throw new IllegalArgumentException("Column '" + column2 + "' not found in second file");
         }
         
+        // Log memory usage and data sizes for debugging
+        Runtime runtime = Runtime.getRuntime();
+        long beforeMemory = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("Memory before comparison: " + (beforeMemory / 1024 / 1024) + "MB");
+        System.out.println("File1 values count: " + file1Values.size());
+        System.out.println("File2 values count: " + file2Values.size());
+        
         // Find common values (matched)
         Set<String> commonValues = new HashSet<>(file1Values);
         commonValues.retainAll(file2Values);
@@ -86,34 +94,44 @@ public class ComparisonService {
         Set<String> onlyInFile2 = new HashSet<>(file2Values);
         onlyInFile2.removeAll(file1Values);
         
-        // Create matched rows with cross-sheet information
-        for (String value : commonValues) {
-            Map<String, Object> matchedRow = new LinkedHashMap<>();
-            matchedRow.put(column1 + " (" + file1.getSelectedSheet() + ")", value);
-            matchedRow.put(column2 + " (" + file2.getSelectedSheet() + ")", value);
-            matchedRow.put("Status", "MATCHED");
-            matchedRows.add(matchedRow);
-        }
+        // Process in batches to avoid memory issues
+        processBatchedResults(commonValues, matchedRows, column1, column2, file1, file2, "MATCHED");
+        processBatchedResults(onlyInFile1, mismatchedRows, column1, column2, file1, file2, "ONLY IN " + file1.getSelectedSheet().toUpperCase());
+        processBatchedResults(onlyInFile2, mismatchedRows, column1, column2, file1, file2, "ONLY IN " + file2.getSelectedSheet().toUpperCase());
         
-        // Create mismatched rows (values only in file1)
-        for (String value : onlyInFile1) {
-            Map<String, Object> mismatchedRow = new LinkedHashMap<>();
-            mismatchedRow.put(column1 + " (" + file1.getSelectedSheet() + ")", value);
-            mismatchedRow.put(column2 + " (" + file2.getSelectedSheet() + ")", "NOT FOUND");
-            mismatchedRow.put("Status", "ONLY IN " + file1.getSelectedSheet().toUpperCase());
-            mismatchedRows.add(mismatchedRow);
-        }
-        
-        // Create mismatched rows (values only in file2)
-        for (String value : onlyInFile2) {
-            Map<String, Object> mismatchedRow = new LinkedHashMap<>();
-            mismatchedRow.put(column1 + " (" + file1.getSelectedSheet() + ")", "NOT FOUND");
-            mismatchedRow.put(column2 + " (" + file2.getSelectedSheet() + ")", value);
-            mismatchedRow.put("Status", "ONLY IN " + file2.getSelectedSheet().toUpperCase());
-            mismatchedRows.add(mismatchedRow);
-        }
+        long afterMemory = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("Memory after comparison: " + (afterMemory / 1024 / 1024) + "MB");
+        System.out.println("Memory used: " + ((afterMemory - beforeMemory) / 1024 / 1024) + "MB");
         
         return new ComparisonResult(matchedRows, mismatchedRows);
+    }
+    
+    private void processBatchedResults(Set<String> values, List<Map<String, Object>> results, 
+                                    String column1, String column2, ExcelData file1, ExcelData file2, String status) {
+        final int BATCH_SIZE = 1000;
+        int processed = 0;
+        
+        for (String value : values) {
+            Map<String, Object> row = new LinkedHashMap<>(4); // Initial capacity to reduce resizing
+            if ("MATCHED".equals(status)) {
+                row.put(column1 + " (" + file1.getSelectedSheet() + ")", value);
+                row.put(column2 + " (" + file2.getSelectedSheet() + ")", value);
+            } else if (status.contains(file1.getSelectedSheet().toUpperCase())) {
+                row.put(column1 + " (" + file1.getSelectedSheet() + ")", value);
+                row.put(column2 + " (" + file2.getSelectedSheet() + ")", "NOT FOUND");
+            } else {
+                row.put(column1 + " (" + file1.getSelectedSheet() + ")", "NOT FOUND");
+                row.put(column2 + " (" + file2.getSelectedSheet() + ")", value);
+            }
+            row.put("Status", status);
+            results.add(row);
+            
+            // Periodically trigger garbage collection for large datasets
+            if (++processed % BATCH_SIZE == 0 && processed > 0) {
+                System.gc(); // Suggest garbage collection
+                System.out.println("Processed " + processed + " records...");
+            }
+        }
     }
     
     private ComparisonResult compareWithFullRowData(ExcelData file1, ExcelData file2, String column1, String column2) {

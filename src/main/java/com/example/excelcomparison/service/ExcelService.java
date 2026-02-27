@@ -72,13 +72,21 @@ public class ExcelService {
         Sheet sheet = workbook.getSheetAt(sheetIndex);
         
         // Get all sheet names
-        List<String> sheetNames = new ArrayList<>();
+        List<String> sheetNames = new ArrayList<>(workbook.getNumberOfSheets());
         for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
             sheetNames.add(workbook.getSheetName(i));
         }
         
-        List<String> headers = new ArrayList<>();
-        List<Map<String, Object>> rows = new ArrayList<>();
+        // Pre-size collections based on sheet size to reduce memory reallocation
+        int estimatedRows = Math.min(sheet.getLastRowNum(), 10000); // Cap at 10k for safety
+        List<String> headers = new ArrayList<>(20); // Typical Excel has <20 columns
+        List<Map<String, Object>> rows = new ArrayList<>(estimatedRows);
+        
+        // Log memory usage before parsing
+        Runtime runtime = Runtime.getRuntime();
+        long beforeMemory = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("Memory before Excel parsing: " + (beforeMemory / 1024 / 1024) + "MB");
+        System.out.println("Estimated rows to process: " + estimatedRows);
         
         Row headerRow = sheet.getRow(0);
         if (headerRow != null) {
@@ -87,17 +95,28 @@ public class ExcelService {
             }
         }
         
+        // Process rows with memory management
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
             if (row != null) {
-                Map<String, Object> rowData = new LinkedHashMap<>();
+                Map<String, Object> rowData = new LinkedHashMap<>(headers.size()); // Initial capacity based on header count
                 for (int j = 0; j < headers.size(); j++) {
                     Cell cell = row.getCell(j);
                     rowData.put(headers.get(j), getCellValueAsString(cell));
                 }
                 rows.add(rowData);
+                
+                // Periodic garbage collection for large files
+                if (i % 1000 == 0) {
+                    System.gc();
+                    System.out.println("Processed " + i + " rows...");
+                }
             }
         }
+        
+        long afterMemory = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("Memory after Excel parsing: " + (afterMemory / 1024 / 1024) + "MB");
+        System.out.println("Memory used for parsing: " + ((afterMemory - beforeMemory) / 1024 / 1024) + "MB");
         
         String selectedSheet = workbook.getSheetName(sheetIndex);
         workbook.close();
