@@ -19,6 +19,21 @@ public class ExcelService {
             throw new IllegalArgumentException("File cannot be null or empty");
         }
         
+        // Memory monitoring
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        long usedMemory = runtime.totalMemory() - runtime.freeMemory();
+        double memoryUsagePercent = (double) usedMemory / maxMemory * 100;
+        
+        System.out.println("=== Excel Service Memory Status ===");
+        System.out.println("Max JVM Memory: " + (maxMemory / 1024 / 1024) + "MB");
+        System.out.println("Currently Used: " + (usedMemory / 1024 / 1024) + "MB (" + String.format("%.1f", memoryUsagePercent) + "%)");
+        
+        if (memoryUsagePercent > 75) {
+            System.out.println("WARNING: High memory usage during Excel parsing!");
+            System.gc();
+        }
+        
         Workbook workbook = WorkbookFactory.create(file.getInputStream());
         List<String> sheetNames = new ArrayList<>();
         

@@ -9,6 +9,25 @@ import java.util.*;
 public class ComparisonService {
 
     public ComparisonResult compareColumns(ExcelData file1, ExcelData file2, String column1, String column2) {
+        // Memory monitoring and early warning system
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        long usedMemory = runtime.totalMemory() - runtime.freeMemory();
+        double memoryUsagePercent = (double) usedMemory / maxMemory * 100;
+        
+        System.out.println("=== Memory Status ===");
+        System.out.println("Max JVM Memory: " + (maxMemory / 1024 / 1024) + "MB");
+        System.out.println("Currently Used: " + (usedMemory / 1024 / 1024) + "MB (" + String.format("%.1f", memoryUsagePercent) + "%)");
+        
+        // Warning if memory usage is high
+        if (memoryUsagePercent > 80) {
+            System.out.println("WARNING: High memory usage detected! Consider:");
+            System.out.println("1. Using smaller Excel files");
+            System.out.println("2. Increasing JVM max heap (-Xmx)");
+            System.out.println("3. Closing other applications");
+            System.gc(); // Force garbage collection
+        }
+        
         // Validation
         if (file1 == null || file2 == null) {
             throw new IllegalArgumentException("Both files must be provided for comparison");
