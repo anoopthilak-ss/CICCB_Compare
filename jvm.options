@@ -1,0 +1,26 @@
+# JVM Memory Options for Excel Comparison Tool
+# IDEs can use this file for JVM configuration
+
+# Memory Settings
+-Xms512m
+-Xmx2g
+-XX:+UseG1GC
+-XX:MaxGCPauseMillis=200
+-XX:+UseStringDeduplication
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=./java_pid%p.hprof
+
+# GC Logging
+-XX:+PrintGCDetails
+-XX:+PrintGCTimeStamps
+-Xloggc:gc.log
+
+# Performance
+-XX:+UseCompressedOops
+-XX:+UseCompressedClassPointers
+
+# File Encoding
+-Dfile.encoding=UTF-8
+
+# Spring Boot
+-Dspring.config.location=classpath:/application.properties

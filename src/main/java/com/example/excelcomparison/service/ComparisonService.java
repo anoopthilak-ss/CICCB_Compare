@@ -79,6 +79,40 @@ public class ComparisonService {
     }
     
     private ComparisonResult compareWithCrossSheetValues(ExcelData file1, ExcelData file2, String column1, String column2) {
+        // Aggressive memory monitoring for IDE environments
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        long usedMemory = runtime.totalMemory() - runtime.freeMemory();
+        double memoryUsagePercent = (double) usedMemory / maxMemory * 100;
+        
+        System.out.println("=== Memory Status ===");
+        System.out.println("Max JVM Memory: " + (maxMemory / 1024 / 1024) + "MB");
+        System.out.println("Currently Used: " + (usedMemory / 1024 / 1024) + "MB (" + String.format("%.1f", memoryUsagePercent) + "%)");
+        
+        // Critical memory check - fail fast if insufficient memory
+        long availableMemory = maxMemory - usedMemory;
+        long requiredMemory = (file1.getRows().size() + file2.getRows().size()) * 1024; // Estimate 1KB per row
+        
+        if (availableMemory < requiredMemory) {
+            System.out.println("CRITICAL: Insufficient memory for comparison!");
+            System.out.println("Available: " + (availableMemory / 1024 / 1024) + "MB");
+            System.out.println("Required: " + (requiredMemory / 1024 / 1024) + "MB");
+            System.out.println("SOLUTIONS:");
+            System.out.println("1. Close other applications");
+            System.out.println("2. Use start-dynamic-memory.sh script");
+            System.out.println("3. Increase IDE JVM heap (-Xmx)");
+            throw new RuntimeException("Insufficient memory for Excel comparison. Please increase JVM heap size.");
+        }
+        
+        // Warning if memory usage is high
+        if (memoryUsagePercent > 70) {
+            System.out.println("WARNING: High memory usage detected! Consider:");
+            System.out.println("1. Using smaller Excel files");
+            System.out.println("2. Increasing JVM max heap (-Xmx)");
+            System.out.println("3. Closing other applications");
+            System.gc(); // Force garbage collection
+        }
+        
         // Use ArrayList with initial capacity to reduce memory reallocation
         List<Map<String, Object>> matchedRows = new ArrayList<>(1000);
         List<Map<String, Object>> mismatchedRows = new ArrayList<>(1000);
@@ -95,10 +129,6 @@ public class ComparisonService {
             throw new IllegalArgumentException("Column '" + column2 + "' not found in second file");
         }
         
-        // Log memory usage and data sizes for debugging
-        Runtime runtime = Runtime.getRuntime();
-        long beforeMemory = runtime.totalMemory() - runtime.freeMemory();
-        System.out.println("Memory before comparison: " + (beforeMemory / 1024 / 1024) + "MB");
         System.out.println("File1 values count: " + file1Values.size());
         System.out.println("File2 values count: " + file2Values.size());
         
@@ -120,7 +150,7 @@ public class ComparisonService {
         
         long afterMemory = runtime.totalMemory() - runtime.freeMemory();
         System.out.println("Memory after comparison: " + (afterMemory / 1024 / 1024) + "MB");
-        System.out.println("Memory used: " + ((afterMemory - beforeMemory) / 1024 / 1024) + "MB");
+        System.out.println("Memory used: " + ((afterMemory - usedMemory) / 1024 / 1024) + "MB");
         
         return new ComparisonResult(matchedRows, mismatchedRows);
     }
