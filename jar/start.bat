@@ -5,8 +5,8 @@ echo === Excel Comparison Tool - JAR Startup ===
 echo.
 
 REM Check if JAR exists
-if not exist "jar\excel-comparison-tool-1.0.0.jar" (
-    echo Error: JAR file not found: jar\excel-comparison-tool-1.0.0.jar
+if not exist "jar\ciccb-comparison-tool-1.0.0.jar" (
+    echo Error: JAR file not found: jar\ciccb-comparison-tool-1.0.0.jar
     echo Please ensure the JAR file is in the jar\ directory.
     pause
     exit /b 1
@@ -34,7 +34,7 @@ echo Heap dump (if OOM): jar\heap-dump.hprof
 echo.
 
 REM Start the application with optimized memory
-java %JVM_ARGS% -jar jar\excel-comparison-tool-1.0.0.jar
+java %JVM_ARGS% -jar jar\ciccb-comparison-tool-1.0.0.jar
 
 echo.
 echo Application stopped.

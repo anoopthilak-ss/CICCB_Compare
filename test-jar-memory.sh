@@ -31,4 +31,4 @@ echo "SOLUTION: Use optimized startup script:"
 echo "./start-jar-optimized.sh"
 echo
 echo "Or manually:"
-echo "java -Xms512m -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar target/excel-comparison-tool-1.0.0.jar"
+echo "java -Xms512m -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar target/ciccb-comparison-tool-1.0.0.jar"

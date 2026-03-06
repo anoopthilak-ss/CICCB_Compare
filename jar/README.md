@@ -1,10 +1,10 @@
-# Excel Comparison Tool - JAR Distribution
+# CICCB Comparison Tool - JAR Distribution
 
 ## Overview
-This folder contains the executable JAR file and startup scripts for the Excel Comparison Tool.
+This folder contains the executable JAR file and startup scripts for the CICCB Comparison Tool.
 
 ## Files Included
-- `excel-comparison-tool-1.0.0.jar` - Main application JAR file
+- `ciccb-comparison-tool-1.0.0.jar` - Main application JAR file
 - `start.sh` - Optimized startup script (macOS/Linux)
 - `start.bat` - Optimized startup script (Windows)
 - `quick-start.sh` - Quick startup script (macOS/Linux)
@@ -40,10 +40,10 @@ If scripts don't work, run manually:
 
 ```bash
 # Basic (2GB heap)
-java -Xms512m -Xmx2g -XX:+UseG1GC -jar excel-comparison-tool-1.0.0.jar
+java -Xms512m -Xmx2g -XX:+UseG1GC -jar ciccb-comparison-tool-1.0.0.jar
 
 # Advanced (4GB heap)
-java -Xms512m -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication -jar excel-comparison-tool-1.0.0.jar
+java -Xms512m -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication -jar ciccb-comparison-tool-1.0.0.jar
 ```
 
 ## System Requirements
@@ -99,7 +99,7 @@ If you get memory errors:
 2. Close other applications
 3. Increase heap size manually:
    ```bash
-   java -Xms1g -Xmx8g -jar excel-comparison-tool-1.0.0.jar
+   java -Xms1g -Xmx8g -jar ciccb-comparison-tool-1.0.0.jar
    ```
 
 ### Port Already in Use
@@ -109,7 +109,7 @@ If port 8080 is busy:
 lsof -ti:8080 | xargs kill -9
 
 # Or use different port
-java -jar excel-comparison-tool-1.0.0.jar --server.port=8081
+java -jar ciccb-comparison-tool-1.0.0.jar --server.port=8081
 ```
 
 ### Java Not Found

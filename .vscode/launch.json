@@ -2,11 +2,11 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Spring Boot-ExcelComparisonApplication<excel-comparison-tool>",
+            "name": "Spring Boot-ExcelComparisonApplication<ciccb-comparison-tool>",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "mainClass": "com.example.excelcomparison.ExcelComparisonApplication",
-            "projectName": "excel-comparison-tool",
+            "projectName": "ciccb-comparison-tool",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }

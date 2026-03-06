@@ -26,7 +26,7 @@ build_with_java() {
     
     if [ $? -eq 0 ]; then
         echo "✅ Build successful with Java $java_version"
-        echo "Created JAR: target/excel-comparison-tool-1.0.0.jar"
+        echo "Created JAR: target/ciccb-comparison-tool-1.0.0.jar"
         echo "This JAR will run on Java $java_version and higher"
     else
         echo "❌ Build failed with Java $java_version"
@@ -59,7 +59,7 @@ mvn clean package -DskipTests
 
 if [ $? -eq 0 ]; then
     echo "✅ Build successful with default Java"
-    echo "Created JAR: target/excel-comparison-tool-1.0.0.jar"
+    echo "Created JAR: target/ciccb-comparison-tool-1.0.0.jar"
 else
     echo "❌ Build failed with default Java"
 fi

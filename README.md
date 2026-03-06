@@ -1,6 +1,6 @@
-# Excel Comparison Tool
+# CICCB Comparison Tool
 
-A web-based Excel comparison tool built with Java Spring Boot that allows users to upload two Excel files, select columns to compare, and download the comparison results.
+A web-based CICCB comparison tool built with Java Spring Boot that allows users to upload two Excel files, select columns to compare, and download the comparison results.
 
 ## Features
 
@@ -27,7 +27,7 @@ A web-based Excel comparison tool built with Java Spring Boot that allows users 
 ## Project Structure
 
 ```
-excel-comparison-tool/
+ciccb-comparison-tool/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/example/excelcomparison/
@@ -65,7 +65,7 @@ excel-comparison-tool/
 ```bash
 # If using git
 git clone <repository-url>
-cd excel-comparison-tool
+cd ciccb-comparison-tool
 
 # Or download and extract the ZIP file
 ```
@@ -87,7 +87,7 @@ The application will start on `http://localhost:8080`
 ### Alternative: Run as JAR
 
 ```bash
-java -jar target/excel-comparison-tool-1.0.0.jar
+java -jar target/ciccb-comparison-tool-1.0.0.jar
 ```
 
 ## Usage

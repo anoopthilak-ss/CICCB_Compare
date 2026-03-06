@@ -13,10 +13,10 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>excel-comparison-tool</artifactId>
+    <artifactId>ciccb-comparison-tool</artifactId>
     <version>1.0.0</version>
-    <name>excel-comparison-tool</name>
-    <description>Web-based Excel comparison tool using Spring Boot</description>
+    <name>ciccb-comparison-tool</name>
+    <description>Web-based CICCB comparison tool using Spring Boot</description>
 
     <properties>
         <java.version>8</java.version>

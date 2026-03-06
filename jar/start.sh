@@ -7,7 +7,7 @@ echo "=== Excel Comparison Tool - JAR Startup ==="
 echo
 
 # Check if JAR exists
-JAR_FILE="jar/excel-comparison-tool-1.0.0.jar"
+JAR_FILE="jar/ciccb-comparison-tool-1.0.0.jar"
 if [ ! -f "$JAR_FILE" ]; then
     echo "Error: JAR file not found: $JAR_FILE"
     echo "Please ensure the JAR file is in the jar/ directory."
